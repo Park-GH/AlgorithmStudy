@@ -6,98 +6,127 @@
 #include <string>
 using namespace std;
 
-int main() { 
-	char map[MAX][MAX];
-	int water[MAX][MAX];
-	bool marked[MAX][MAX];
+int map[MAX][MAX] = {0,};
+int water[MAX][MAX];
+int marked[MAX][MAX];
+int map_x[4] = { 0, 0, -1, 1 };
+int map_y[4] = { -1, 1, 0, 0 };
 
-	pair<int, int> s, e;
-	vector<pair<int, int>> v;
-	int map_x[4] = { 0, 0, -1, 1 };
-	int map_y[4] = { -1, 1, 0, 0 };
-	int r, c;
-	cin >> r >> c;
+struct mapYX {
+	int y;
+	int x;
+};
 
-	for (int i = 0; i < r; i++) {
-		for (int j = 0; j < c; j++) {
-			water[i][j] = 999;
-		}
-	}
-	for (int i = 0; i < r; i++) {
-		for (int j = 0; j < c; j++)
-		{
-			cin >> map[i][j];
-			if(map[i][j] == 'S'){
-				s.first = i;
-				s.second = j;
-			}
-			else if(map[i][j] == 'D') {
-				e.first = i;
-				e.second = j;
-			}
-			else if (map[i][j] == '*') {
-				water[i][j] = 0;
-				v.push_back({ i,j });
-			}
-		}
-	}
-	pair<int, int> start;
-	pair<int, int> point;
-	while (!v.empty()) {
-		start.first = v.front().first;
-		start.second = v.front().second;
-		v.pop_back();
-		for (int i = 0; i < 4; i++) {
-			point.first = start.first + map_y[i];
-			point.second = start.second + map_x[i];
-			if (point.first >= 0 && point.second >= 0 && point.first < r && point.second < c) {
-				if (map[point.first][point.second] == '.') {
-					if (water[point.first][point.second] > water[start.first][start.second] + 1) {
-						water[point.first][point.second] = water[start.first][start.second] + 1;
-						v.push_back({ point.first, point.second });
-					}
-
-				}				
-			}
-		}
-	}
-	
-	for (int i = 0; i < r; i++) {
-		for (int j = 0; j < c; j++) {
-			cout << water[i][j];
+void printmark(int r, int c) {
+	cout << endl << endl;
+	for (int i = 0; i <= r + 1; i++) {
+		for (int j = 0; j <= c + 1; j++) {
+			cout << marked[i][j];
 		}
 		cout << endl;
 	}
-	
-	queue<pair<pair<int, int>, int>> Q;
-	Q.push({ {start.first, start.second}, 0 });
-	marked[start.first][start.second] = 1;
-
-	while (!Q.empty()) {
-		start.first = Q.front().first.first;
-		start.second = Q.front().first.second;
-		int cnt = Q.front().second;
-		Q.pop();
-		if (start.first == e.first && start.second == e.second) {
-			cout << cnt << endl;
-			return 0;
-
+}
+void printmap(int r, int c) {
+	cout << endl << endl;
+	for (int i = 0; i <= r + 1; i++) {
+		for (int j = 0; j <= c + 1; j++) {
+			cout << map[i][j];
 		}
-		for (int i = 0; i < 4; i++) {
-			point.first = start.first + map_y[i];
-			point.second = point.second + map_x[i];
-			if (point.first >= 0 && point.second >= 0 && point.first < r && point.second < c) {
-				if (!marked[point.first][point.second] && map[point.first][point.second] != 'X' && water[point.first][point.second] > cnt + 1)
-				{
-					marked[point.first][point.second] = 1;
-					Q.push({ { point.first, point.second}, cnt + 1 });
-				}
-
-			}
-
-		}
-	
+		cout << endl;
 	}
+}
 
-	cout << "KAKTUS" << endl;
+void BFS(mapYX s, mapYX e) {
+	queue<mapYX> q;
+	mapYX start, point;
+	marked[s.y][s.x] = 1;
+	q.push(s);
+	
+	while (!q.empty()) {
+		start = q.front();
+		q.pop();
+		for (int i = 0; i < 4; i++) {
+			point.y = start.y + map_y[i];
+			point.x = start.x + map_x[i];
+			if (marked[point.y][point.x] == 0) {
+				marked[point.y][point.x] = 1;
+				map[point.y][point.x] = map[start.y][start.x] + 1;
+				q.push({ point.y, point.x });
+			}
+		}
+
+	}
+}
+void waterBFS(mapYX s, mapYX e, int cnt) {
+	queue<mapYX> q;
+	mapYX start, point;
+	marked[s.y][s.x] = cnt;
+	q.push(s);
+
+	while (!q.empty()) {
+		start = q.front();
+		q.pop();
+		for (int i = 0; i < 4; i++) {
+			point.y = start.y + map_y[i];
+			point.x = start.x + map_x[i];
+			if (marked[point.y][point.x] == cnt - 1) {
+				marked[point.y][point.x] = cnt;
+				map[point.y][point.x] = map[start.y][start.x] + 1;
+				q.push({ point.y, point.x });
+			}
+		}
+
+	}
+}
+
+
+int main() { 
+	ios::sync_with_stdio(false);
+	cin.tie(NULL);
+	cout.tie(NULL);
+
+
+	mapYX s, e;
+	queue<mapYX> waterr;
+	
+
+	int r, c;
+	
+	cin >> r >> c;
+	for (int i = 0; i <= r + 1; i++) {
+		marked[i][0] = -1;
+		marked[i][c + 1] = -1;
+	}
+	for (int i = 0; i <= c + 1; i++) {
+		marked[0][i] = -1;
+		marked[r+1][i] = -1;
+	}
+	
+
+	for (int i = 1; i <= r; i++) {
+		for (int j = 1; j <= c; j++) {
+			char ch;
+			cin >> ch;
+			if (ch == 'S') {
+				s = { i,j };
+				map[i][j] = 0;
+			}
+			else if (ch == 'D')
+				e = { i,j };
+			else if (ch == '*')
+				waterr.push({ i, j });
+			else if (ch == 'X')
+				marked[i][j] = -1;
+		}
+	}
+	int cnt = 1;
+	BFS(s, e);
+	while (!waterr.empty()){
+		cnt++;
+		waterBFS(waterr.front(), e, cnt);
+		waterr.pop();
+	}
+	printmap(r, c);
+	printmark(r, c);
+
 }
